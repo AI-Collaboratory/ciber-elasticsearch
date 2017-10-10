@@ -6,8 +6,8 @@
     elasticsearch_max_open_files: 65535
     elasticsearch_heap_size: 16g
     elasticsearch_data_dirs:
-      - /mnt/data/es/indexes
-    elasticsearch_log_dir: /mnt/data/es/log
+      - /mnt/vol-1/es/indexes
+    elasticsearch_log_dir: /mnt/vol-1/es/log
     elasticsearch_interface: ens4
     #elasticsearch_max_locked_memory:
 
@@ -24,8 +24,9 @@
         content: |
           export ES_HEAP_SIZE={{ elasticsearch_heap_size }}
 
-    - apt_repository: repo='deb http://packages.elastic.co/elasticsearch/2.x/debian stable main' state=present
-    - apt_key: url=https://packages.elastic.co/GPG-KEY-elasticsearch state=present
+    - apt: pkg=apt-transport-https state=installed
+    - apt_repository: repo='deb https://artifacts.elastic.co/packages/5.x/apt stable main' state=present
+    - apt_key: url=https://artifacts.elastic.co/GPG-KEY-elasticsearch state=present
     - apt: pkg=elasticsearch state=installed update_cache=yes allow_unauthenticated=yes
     - name: elasticsearch-configure | Set limits pt. 1
       lineinfile: dest=/etc/security/limits.conf regexp='^{{elasticsearch_user}}     -    nofile    {{elasticsearch_max_open_files}}' insertafter=EOF line='{{elasticsearch_user}}     -    nofile    {{elasticsearch_max_open_files}}'
@@ -44,9 +45,9 @@
     - template: src=elasticsearch.yml.j2 dest=/etc/elasticsearch/elasticsearch.yml
     #- template: src=logging.yml.j2 dest=/etc/elasticsearch/logging.yml
 
-    - command: bin/plugin install {{item}}
-      with_items:
-        - delete-by-query
-      args:
-        chdir: /usr/share/elasticsearch
+    # - command: bin/plugin install {{item}}
+    #   with_items:
+    #     - delete-by-query
+    #   args:
+    #     chdir: /usr/share/elasticsearch
     - service: name=elasticsearch enabled=yes state=restarted
